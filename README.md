@@ -17,7 +17,7 @@ A Chrome extension that shows your [Kite](https://github.com/merlinfuchs/kite) D
 - **Keyboard:** Escape closes the bot dropdown (or the usage page), arrow keys, Home and End move through the bots, and Enter selects.
 - **Quick links:** Dashboard, Commands, Events and Logs for the selected bot.
 - **Themes:** system, light or dark, set in Settings.
-- **Settings:** test your connection, see the extension version, and jump to the GitHub repo and changelog.
+- **Settings:** test your connection, see the extension version, and jump to the GitHub repo.
 
 ## Install
 
