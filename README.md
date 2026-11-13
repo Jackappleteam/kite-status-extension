@@ -31,6 +31,18 @@ A Chrome extension that shows your [Kite](https://github.com/merlinfuchs/kite) D
 
 If you are not logged in to Kite in that browser, you can paste an API token instead (Kite user menu, then API tokens). Note that API tokens cannot start or stop a bot.
 
+## Project structure
+
+```
+manifest.json            Extension manifest (must stay in the root)
+icons/                   Extension and toolbar icons
+src/
+  background/            Background service worker: polling, badge, notifications
+  popup/                 Toolbar popup (status, usage page, bot switcher)
+  options/               Settings page
+  shared/                Code and styles used by all of the above (Kite API client, quiet hours, theme)
+```
+
 ## How it works
 
 The extension talks to the Kite API (`/v1/apps/...`) with your session cookie or API token. A background worker checks every 30 seconds:

@@ -1,20 +1,20 @@
 {
   "manifest_version": 3,
   "name": "Kite Bot Status",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "description": "See your Kite bot's status and credits used this month from the toolbar.",
   "action": {
     "default_title": "Kite Bot Status",
-    "default_popup": "popup.html",
+    "default_popup": "src/popup/popup.html",
     "default_icon": {
-      "16": "toolbar16.png",
-      "32": "toolbar32.png",
-      "48": "toolbar48.png"
+      "16": "icons/toolbar16.png",
+      "32": "icons/toolbar32.png",
+      "48": "icons/toolbar48.png"
     }
   },
-  "options_page": "options.html",
+  "options_page": "src/options/options.html",
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/background/background.js"
   },
   "permissions": [
     "storage",
@@ -26,9 +26,9 @@
     "http://*/*"
   ],
   "icons": {
-    "16": "icon16.png",
-    "48": "icon48.png",
-    "128": "icon128.png"
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   },
   "host_permissions": [
     "https://api.kite.onl/*"

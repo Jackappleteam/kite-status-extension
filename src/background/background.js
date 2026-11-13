@@ -1,4 +1,4 @@
-importScripts("shared.js");
+importScripts("../shared/shared.js");
 
 const COLORS = { online: "#23a55a", paused: "#f0b232", offline: "#80848e", error: "#f23f43" };
 const MAX_BOTS = 10;
@@ -98,7 +98,7 @@ async function maybeNotify(s, kind) {
   const nk = "notified:" + id, lk = "lastKind:" + id;
   const st = await chrome.storage.local.get([nk, lk]);
   let notified = st[nk] && st[nk].month === month ? st[nk] : { month, t80: false, t100: false };
-  const note = (title, message) => chrome.notifications.create({ type: "basic", iconUrl: "icon128.png", title, message });
+  const note = (title, message) => chrome.notifications.create({ type: "basic", iconUrl: chrome.runtime.getURL("icons/icon128.png"), title, message });
 
   if (s.limit > 0 && s.pct >= 100 && !notified.t100) { notified.t100 = true; note(`Kite: ${s.app.name} is out of credits`, `Used all ${s.limit} credits.`); }
   else if (s.limit > 0 && s.pct >= 80 && !notified.t80) { notified.t80 = true; note(`Kite: ${s.app.name} at 80% of credits`, `${s.used}/${s.limit} used.`); }
@@ -122,7 +122,7 @@ async function maybeNotifyErrors(s) {
   if (!fresh) return;
   const latest = s.recentErrors && s.recentErrors[0];
   chrome.notifications.create("kite-errors|" + cfg.dashBase + "/apps/" + s.app.id + "/logs", {
-    type: "basic", iconUrl: "icon128.png",
+    type: "basic", iconUrl: chrome.runtime.getURL("icons/icon128.png"),
     title: `Kite: ${fresh} new error${fresh === 1 ? "" : "s"} in ${s.app.name}`,
     message: latest ? latest.message.slice(0, 180) : "Click to open the logs.",
   });
