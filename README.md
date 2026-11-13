@@ -36,6 +36,8 @@ If you are not logged in to Kite in that browser, you can paste an API token ins
 ```
 manifest.json            Extension manifest (must stay in the root)
 icons/                   Extension and toolbar icons
+scripts/                 check.js, the checks that CI runs
+.github/                 CI workflow and Dependabot config
 src/
   background/            Background service worker: polling, badge, notifications
   popup/                 Toolbar popup (status, usage page, bot switcher)
@@ -65,6 +67,16 @@ Everything is stored locally in Chrome (`chrome.storage.local`). The extension o
 - **Route not found:** check the API URL in Settings. It must be the API address, for example `https://api.kite.onl`, not the dashboard address.
 - **No notifications:** check quiet hours, the "Notify me when new errors appear" setting, and that Windows or Chrome is not blocking notifications for the extension.
 - **Some data unavailable:** the popup names the request that failed. This usually means your Kite server is older and lacks that endpoint.
+
+## Development
+
+There are no dependencies or build step. Load the folder as an unpacked extension to try changes. Before pushing, run the checks (needs Node 18 or newer):
+
+```
+node scripts/check.js
+```
+
+The same checks run in GitHub Actions on every push and pull request (`.github/workflows/ci.yml`), and Dependabot keeps the Action versions up to date (`.github/dependabot.yml`).
 
 ## Updating
 
