@@ -1,5 +1,7 @@
 # Kite Bot Status
 
+**Current version: beta-v0.2.** Chrome needs a numeric version (`0.2.0` in `manifest.json`), so the readable name lives in `version_name`.
+
 A Chrome extension that shows your [Kite](https://github.com/merlinfuchs/kite) Discord bot's status and monthly credit usage right from the toolbar.
 
 ## Features
@@ -13,11 +15,11 @@ A Chrome extension that shows your [Kite](https://github.com/merlinfuchs/kite) D
 - **Quiet hours:** pause notifications between two times. A yellow moon shows in the popup while it is enabled.
 - **Usage page:** credits per day, daily average, on-pace forecast, reset date, and usage by type (Commands, Messages, Events).
 - **Start / stop:** turn the selected bot on or off (needs your Kite login). The popup shows "Stopping…" or "Starting…", then the new state right away.
-- **Copy buttons:** copy the app ID, or the Discord application ID when Kite provides it.
+- **Copy button:** copy the Discord application ID when Kite provides it.
 - **Keyboard:** Escape closes the bot dropdown (or the usage page), arrow keys, Home and End move through the bots, and Enter selects.
 - **Quick links:** Dashboard, Commands, Events and Logs for the selected bot.
 - **Themes:** system, light or dark, set in Settings.
-- **Settings:** test your connection, see the extension version, and jump to the GitHub repo and changelog.
+- **Settings:** test your connection, see the extension version, and jump to the GitHub repo.
 
 ## Install
 
