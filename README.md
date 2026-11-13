@@ -14,6 +14,7 @@ A Chrome extension that shows your [Kite](https://github.com/merlinfuchs/kite) D
 - **Start / stop:** turn the selected bot on or off (needs your Kite login).
 - **Quick links:** Dashboard, Commands, Events and Logs for the selected bot.
 - **Themes:** system, light or dark, set in Settings.
+- **Settings:** test your connection, see the extension version, and jump to the GitHub repo and changelog.
 
 ## Install
 
@@ -27,7 +28,8 @@ A Chrome extension that shows your [Kite](https://github.com/merlinfuchs/kite) D
 1. Log in to Kite in the same Chrome. The extension uses your Kite login, so no token is needed.
 2. Open the extension's **Settings** (right-click the icon, then Options).
 3. Leave the API URL as `https://api.kite.onl`, or enter your own Kite API address if you self-host. Approve the permission prompt for that address.
-4. Click **Save & connect**.
+4. Click **Test connection** to check the address and your login. It shows who you are logged in as and how many bots it found, without saving anything.
+5. Click **Save & connect**. The button shows "Saved" when it worked.
 
 If you are not logged in to Kite in that browser, you can paste an API token instead (Kite user menu, then API tokens). Note that API tokens cannot start or stop a bot.
 
