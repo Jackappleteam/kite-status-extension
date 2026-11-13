@@ -121,3 +121,20 @@ select:focus{outline:2px solid hsl(var(--primary)/.6);outline-offset:1px}
 .login .lock svg{width:22px;height:22px}.login b{font-size:16px}
 .btn.linkbtn{display:inline-grid;place-items:center;text-decoration:none;margin-top:12px;width:100%;color:hsl(var(--primary-foreground))}
 .btn.linkbtn:hover{color:hsl(var(--primary-foreground))}
+
+/* page switching */
+.views{position:relative;overflow-x:clip}
+.views.ready{transition:height .2s ease}
+.view{position:absolute;top:0;left:0;right:0;opacity:0;visibility:hidden;pointer-events:none;
+  transition:transform .2s ease,opacity .2s ease,visibility 0s .2s}
+.views:not(.ready) .view{transition:none}
+#viewUsage{transform:translateX(28px)}#viewMain:not(.active){transform:translateX(-28px)}
+.view.active{opacity:1;visibility:visible;pointer-events:auto;transform:none;transition:transform .2s ease,opacity .2s ease,visibility 0s}
+/* loading skeleton */
+.sk{color:transparent!important;background:hsl(var(--secondary));border-radius:6px;animation:shimmer 1.1s ease-in-out infinite;user-select:none}
+.sk-block{background:hsl(var(--secondary));border-radius:calc(var(--radius) - 4px);height:32px;animation:shimmer 1.1s ease-in-out infinite}
+#skeleton .btn.sm{border:0;height:34px;display:block}
+.boot #name,.boot #state{color:transparent;background:hsl(var(--secondary));border-radius:6px;animation:shimmer 1.1s ease-in-out infinite}
+.boot #name{min-width:90px;display:block;height:16px;margin-bottom:5px}
+.boot #state{display:inline-block;min-width:54px}.boot .pill .dot{opacity:0}.boot .pill{border-color:transparent;background:transparent;padding:0}
+.boot .avatar{color:transparent;background:hsl(var(--secondary))}

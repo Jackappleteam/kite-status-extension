@@ -41,7 +41,16 @@ function renderPower(s) {
   b.textContent = s.app.enabled ? "Stop bot" : "Start bot";
 }
 
+/* loading skeleton: shown until the first real render so the layout doesn't jump */
+function showSkeleton() {
+  document.body.classList.add("boot");
+  $("skeleton").hidden = false;
+  ["main", "controls", "alert", "err"].forEach((id) => ($(id).hidden = true));
+}
+function endBoot() { document.body.classList.remove("boot"); $("skeleton").hidden = true; }
+
 function render(s, err) {
+  endBoot();
   $("err").hidden = !err; if (err) $("err").textContent = err;
   if (!s) return;
   const kind = statusKind(s);
@@ -80,7 +89,7 @@ async function renderMenu(currentId) {
     const b = dots[a.id], col = !b ? "muted-foreground" : b.kind === "error" || b.kind === "paused" || b.pct >= 100 || b.unseen > 0 ? "destructive" : b.kind === "offline" ? "muted-foreground" : b.pct >= 80 ? "yellow" : "green";
     d.innerHTML = `<div class="avatar">${initial(a.name)}</div><span class="name"></span><span class="sd" style="background:hsl(var(--${col}))" title="${b ? b.kind : ""}"></span>${a.id === currentId ? '<span class="check">✓</span>' : ""}`;
     d.querySelector(".name").textContent = a.name;
-    d.onclick = async () => { m.hidden = true; await chrome.storage.local.set({ appId: a.id, last: null }); load(true); };
+    d.onclick = async () => { m.hidden = true; await chrome.storage.local.set({ appId: a.id, last: null }); showSkeleton(); load(true); };
     m.appendChild(d);
   });
 }
@@ -98,7 +107,7 @@ async function load(force) {
     let id = cfg.appId;
     if (!apps.some((a) => a.id === id)) { id = apps[0] && apps[0].id; await chrome.storage.local.set({ appId: id }); cfg.appId = id; }
     renderMenu(id);
-    if (!id) { $("state").textContent = "No apps"; return; }
+    if (!id) { endBoot(); $("state").textContent = "No apps"; return; }
     const s = await fetchStatus(cfg); await minDelay;
     await chrome.storage.local.set({ last: s, lastError: null });
     renderLinks(cfg); render(s);
@@ -106,6 +115,7 @@ async function load(force) {
     hideLogin();
   } catch (e) {
     await minDelay;
+    endBoot();
     if (e.status === 401) return showLogin(cfg);
     $("err").hidden = false; $("err").textContent = String(e.message || e) + " (API: " + cfg.apiBase + ")"; $("state").textContent = "Couldn't load";
   }
@@ -140,7 +150,17 @@ const TYPES = [
   { key: "event_listener_flow_execution", label: "Events", color: "var(--chart-4)" },
 ];
 
-function showView(v) { $("viewMain").hidden = v !== "main"; $("viewUsage").hidden = v !== "usage"; }
+/* page switching: both views stay mounted; the wrapper animates to the active view's height */
+function fit() { const v = document.querySelector(".view.active"); if (v) $("views").style.height = v.offsetHeight + "px"; }
+function showView(v) {
+  $("viewMain").classList.toggle("active", v === "main");
+  $("viewUsage").classList.toggle("active", v === "usage");
+  $("viewMain").inert = v !== "main"; $("viewUsage").inert = v !== "usage";
+  fit();
+}
+const ro = new ResizeObserver(fit); ro.observe($("viewMain")); ro.observe($("viewUsage"));
+$("viewUsage").inert = true; fit();
+requestAnimationFrame(() => requestAnimationFrame(() => $("views").classList.add("ready")));
 $("openUsage").onclick = () => openUsage();
 $("back").onclick = () => showView("main");
 
