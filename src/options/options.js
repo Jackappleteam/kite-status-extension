@@ -29,16 +29,21 @@ $("test").onclick = async () => {
 };
 
 $("save").onclick = async () => {
-  const apiBase = ($("apiBase").value.trim() || "https://api.kite.onl").replace(/\/+$/, "");
-  const token = $("token").value.trim();
+  const apiBase = formUrl();
+  const token = $("token").value.trim(), btn = $("save");
+  btn.disabled = true; btn.textContent = "Saving…"; msg("Saving…", "busy");
   try {
     if (!(await chrome.permissions.request({ origins: [new URL(apiBase).origin + "/*"] }))) return msg("Permission to reach " + apiBase + " was denied.", true);
     const apps = await kiteGet({ apiBase, token }, "/apps");
     const { appId } = await chrome.storage.local.get("appId");
     const keep = (apps || []).some((a) => a.id === appId) ? appId : apps[0] && apps[0].id;
     await chrome.storage.local.set({ quietEnabled: $("quietEnabled").checked, quietStart: $("quietStart").value || "22:00", quietEnd: $("quietEnd").value || "07:00", errorAlerts: $("errorAlerts").checked, apiBase, token, apps: apps || [], appId: keep || "" });
-    msg(`Connected — found ${(apps || []).length} app(s). Click the toolbar icon.`);
-  } catch (e) { msg("Failed: " + e.message, true); }
+    msg(`Saved. Connected — found ${plural((apps || []).length, "bot")}. Click the toolbar icon.`);
+    btn.textContent = "✓ Saved"; btn.classList.add("saved");
+    setTimeout(() => { btn.textContent = "Save & connect"; btn.classList.remove("saved"); }, 2000);
+    return;
+  } catch (e) { msg("Failed: " + e.message.replace("in Settings", "above"), true); }
+  finally { btn.disabled = false; if (!btn.classList.contains("saved")) btn.textContent = "Save & connect"; }
 };
 (async () => { const c = await getConfig(); $("apiBase").value = c.apiBase; $("token").value = c.token; const d = await chrome.storage.local.get(["errorAlerts", "quietEnabled", "quietStart", "quietEnd"]); $("quietEnabled").checked = !!d.quietEnabled; $("quietStart").value = d.quietStart || "22:00"; $("quietEnd").value = d.quietEnd || "07:00"; syncQuiet(); $("errorAlerts").checked = d.errorAlerts !== false; })();
 

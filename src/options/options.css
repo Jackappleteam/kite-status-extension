@@ -4,3 +4,4 @@
 .status.ok{color:hsl(var(--green))}
 .status.bad{color:hsl(var(--notice-fg))}
 .status.busy{color:hsl(var(--muted-foreground))}
+.btn.saved{background:hsl(var(--green));color:#fff;border-color:transparent}
