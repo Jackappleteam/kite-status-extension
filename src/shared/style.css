@@ -149,3 +149,7 @@ select:focus{outline:2px solid hsl(var(--primary)/.6);outline-offset:1px}
 .eitem .emsg{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .eitem .etime{flex:none;color:hsl(var(--muted-foreground));font-size:11px}
 .alerttoggle[disabled]{cursor:default}.alerttoggle[disabled] .chev2{opacity:.3}
+
+/* start / stop feedback */
+.pending .dot{background:transparent;border:1.5px solid hsl(var(--muted-foreground)/.5);border-top-color:hsl(var(--primary));animation:spin .6s linear infinite}
+.offline .dot{background:hsl(var(--muted-foreground))}

@@ -1,5 +1,5 @@
 const $ = (id) => document.getElementById(id);
-const LABELS = { online: "Online", paused: "Out of credits", offline: "Offline", error: "Bot token invalid" };
+const LABELS = { online: "Online", paused: "Out of credits", offline: "Stopped", error: "Bot token invalid" };
 let apps = [], current = null, cfgCache = null, confirmStop = false;
 const initial = (n) => (n || "?").trim().charAt(0).toUpperCase();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -49,6 +49,9 @@ function showSkeleton() {
 }
 function endBoot() { document.body.classList.remove("boot"); $("skeleton").hidden = true; }
 
+let updatedAt = 0;
+function markUpdated(at) { updatedAt = at; $("updated").textContent = "Updated " + ago(at); }
+
 function render(s, err) {
   endBoot();
   $("err").hidden = !err; if (err) $("err").textContent = err;
@@ -66,8 +69,7 @@ function render(s, err) {
   $("remaining").textContent = s.limit ? Math.max(0, s.limit - s.used).toLocaleString() + " left" : "";
   $("servers").textContent = s.app.discord_guild_count != null ? s.app.discord_guild_count + " servers" : "";
   $("reason").hidden = !s.app.disabled_reason; $("reason").textContent = s.app.disabled_reason || "";
-  const mins = Math.round((Date.now() - s.at) / 60000);
-  $("updated").textContent = mins < 1 ? "Updated just now" : `Updated ${mins}m ago`;
+  markUpdated(s.at);
   // error alert
   const a = $("alert");
   if (s.unseenCount > 0) {
@@ -125,9 +127,9 @@ async function renderMenu(currentId) {
   });
 }
 
-async function load(force) {
+async function load(force, quiet) {
   const cfg = await getConfig(); cfgCache = cfg;
-  document.body.classList.add("loading"); $("refresh").innerHTML = '<span class="spin"></span>Refreshing';
+  if (!quiet) { document.body.classList.add("loading"); $("refresh").innerHTML = '<span class="spin"></span>Refreshing'; }
   const minDelay = force ? sleep(450) : Promise.resolve(); // brief, visible load on manual refresh
   const st = await chrome.storage.local.get(["last", "lastError", "apps"]);
   if (st.apps) { apps = st.apps; renderMenu(cfg.appId); }
@@ -154,15 +156,24 @@ async function load(force) {
 }
 
 /* start / stop (needs your Kite login; API tokens can't change apps) */
+function setPending(text) { $("pill").className = "pill pending"; $("state").textContent = text; }
 $("power").onclick = async () => {
   const st = await chrome.storage.local.get("last"); const s = st.last; if (!s) return;
   const b = $("power");
   if (s.app.enabled && !confirmStop) { confirmStop = true; b.textContent = "Click again to stop"; setTimeout(() => { if (confirmStop) renderPower(s); }, 3000); return; }
-  confirmStop = false; b.disabled = true; b.innerHTML = '<span class="spin"></span>' + (s.app.enabled ? "Stopping…" : "Starting…");
+  confirmStop = false; b.disabled = true;
+  const stopping = s.app.enabled;
+  b.innerHTML = '<span class="spin"></span>' + (stopping ? "Stopping…" : "Starting…");
+  setPending(stopping ? "Stopping…" : "Starting…");
   try {
-    await kiteReq(cfgCache, "PUT", "/apps/" + cfgCache.appId, { name: s.app.name, description: s.app.description || null, enabled: !s.app.enabled });
-    await load(true);
-  } catch (e) { $("err").hidden = false; $("err").textContent = "Couldn't change the bot: " + e.message; renderPower(s); }
+    const res = await kiteReq(cfgCache, "PUT", "/apps/" + cfgCache.appId, { name: s.app.name, description: s.app.description || null, enabled: !stopping });
+    // Show the new state right away from the response instead of waiting for the next poll.
+    const next = { ...s, app: { ...s.app, ...(res && typeof res === "object" ? res : {}), enabled: !stopping }, at: Date.now() };
+    await chrome.storage.local.set({ last: next });
+    render(next); markUpdated(next.at);
+    chrome.runtime.sendMessage("refresh");
+    setTimeout(() => load(false, true), 1500); // quiet re-check that the change stuck
+  } catch (e) { $("err").hidden = false; $("err").textContent = "Couldn't change the bot: " + e.message; render(s); }
 };
 
 $("trigger").onclick = (e) => { e.stopPropagation(); $("menu").hidden = !$("menu").hidden; };
