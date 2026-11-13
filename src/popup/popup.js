@@ -62,7 +62,6 @@ async function copyText(btn, text, label) {
   btn._t = setTimeout(() => { span.textContent = label; btn.classList.remove("done"); }, 1400);
 }
 const discordId = (app) => app && (app.discord_application_id || app.discord_app_id || app.discord_client_id || app.application_id || "");
-$("copyApp").onclick = () => cfgCache && cfgCache.appId && copyText($("copyApp"), cfgCache.appId, "Copy app ID");
 $("copyDiscord").onclick = async () => { const { last } = await chrome.storage.local.get("last"); const id = discordId(last && last.app); if (id) copyText($("copyDiscord"), String(id), "Copy Discord ID"); };
 
 function render(s, err) {
