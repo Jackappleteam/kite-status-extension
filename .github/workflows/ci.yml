@@ -28,7 +28,7 @@ jobs:
         run: |
           mkdir dist
           zip -r dist/kite-bot-status.zip manifest.json icons src README.md
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: kite-bot-status
           path: dist/kite-bot-status.zip
