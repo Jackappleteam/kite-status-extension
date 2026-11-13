@@ -50,4 +50,4 @@ $("save").onclick = async () => {
 function syncQuiet() { document.getElementById("quietTimes").classList.toggle("off", !document.getElementById("quietEnabled").checked); }
 document.getElementById("quietEnabled").onchange = syncQuiet;
 
-$("version").textContent = "v" + chrome.runtime.getManifest().version;
+$("version").textContent = (() => { const m = chrome.runtime.getManifest(); return m.version_name || "v" + m.version; })();

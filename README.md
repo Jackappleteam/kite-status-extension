@@ -1,5 +1,7 @@
 # Kite Bot Status
 
+**Current version: beta-v0.2.** Chrome needs a numeric version (`0.2.0` in `manifest.json`), so the readable name lives in `version_name`.
+
 A Chrome extension that shows your [Kite](https://github.com/merlinfuchs/kite) Discord bot's status and monthly credit usage right from the toolbar.
 
 ## Features
