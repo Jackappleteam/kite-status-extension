@@ -138,3 +138,14 @@ select:focus{outline:2px solid hsl(var(--primary)/.6);outline-offset:1px}
 .boot #name{min-width:90px;display:block;height:16px;margin-bottom:5px}
 .boot #state{display:inline-block;min-width:54px}.boot .pill .dot{opacity:0}.boot .pill{border-color:transparent;background:transparent;padding:0}
 .boot .avatar{color:transparent;background:hsl(var(--secondary))}
+
+/* expandable error list */
+.alerttoggle{display:flex;align-items:center;gap:4px;min-width:0;padding:0;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;text-align:left}
+.alerttoggle .chev2{width:15px;height:15px;flex:none;color:hsl(var(--notice-fg));transition:transform .15s}
+.alert.open .chev2{transform:rotate(90deg)}
+.elist{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+.eitem{display:flex;gap:10px;align-items:baseline;padding:6px 8px;border-radius:calc(var(--radius) - 4px);background:hsl(var(--background)/.5);border:1px solid hsl(var(--destructive)/.25);font-size:12px;color:hsl(var(--foreground))}
+.eitem:hover{background:hsl(var(--destructive)/.18);color:hsl(var(--foreground))}
+.eitem .emsg{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eitem .etime{flex:none;color:hsl(var(--muted-foreground));font-size:11px}
+.alerttoggle[disabled]{cursor:default}.alerttoggle[disabled] .chev2{opacity:.3}

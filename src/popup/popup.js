@@ -74,11 +74,42 @@ function render(s, err) {
     a.hidden = false;
     const n = s.unseenCount;
     $("alertTitle").textContent = n === s.errors ? `${n} error${n === 1 ? "" : "s"} in the last 24h` : `${n} new error${n === 1 ? "" : "s"}`;
-    $("alertMsg").textContent = s.recentErrors && s.recentErrors[0] ? s.recentErrors[0].message : "Open the logs to see what failed.";
-    if (cfgCache) $("alertLink").href = `${cfgCache.dashBase}/apps/${cfgCache.appId}/logs`;
+    const errs = s.recentErrors || [];
+    $("alertMsg").textContent = errs[0] ? errs[0].message : "Open the logs to see what failed.";
+    const logs = cfgCache ? `${cfgCache.dashBase}/apps/${cfgCache.appId}/logs` : "#";
+    $("alertLink").href = logs;
+    renderErrorList(errs, logs);
   } else a.hidden = true;
   renderPower(s);
 }
+
+/* expandable error list: last few unseen errors, each with its time, linking to the logs page */
+function ago(ts) {
+  const sec = Math.max(0, Math.round((Date.now() - new Date(ts).getTime()) / 1000));
+  if (sec < 60) return "just now";
+  if (sec < 3600) return Math.floor(sec / 60) + "m ago";
+  if (sec < 86400) return Math.floor(sec / 3600) + "h ago";
+  return Math.floor(sec / 86400) + "d ago";
+}
+function renderErrorList(errs, logsUrl) {
+  const list = $("alertList"); list.innerHTML = "";
+  errs.forEach((e) => {
+    const a = document.createElement("a"); a.className = "eitem"; a.href = logsUrl; a.target = "_blank";
+    a.innerHTML = '<span class="emsg"></span><span class="etime"></span>';
+    a.querySelector(".emsg").textContent = e.message || "Error";
+    a.querySelector(".etime").textContent = ago(e.at);
+    a.title = new Date(e.at).toLocaleString();
+    list.appendChild(a);
+  });
+  $("alertToggle").disabled = !errs.length; // nothing to expand
+  if (!errs.length) setAlertOpen(false);
+}
+function setAlertOpen(open) {
+  $("alertList").hidden = !open; $("alertMsg").hidden = open;
+  $("alertToggle").setAttribute("aria-expanded", String(open));
+  $("alert").classList.toggle("open", open);
+}
+$("alertToggle").onclick = () => setAlertOpen($("alertList").hidden);
 
 async function renderMenu(currentId) {
   const { botStates } = await chrome.storage.local.get("botStates");
@@ -220,5 +251,5 @@ $("alertClose").onclick = async () => {
   const { last } = await chrome.storage.local.get("last"); if (!last) return;
   await chrome.storage.local.set({ ["errAck:" + cfgCache.appId]: last.latestErrorId || 0 });
   last.unseenCount = 0; last.recentErrors = []; await chrome.storage.local.set({ last });
-  $("alert").hidden = true; chrome.runtime.sendMessage("recompute");
+  $("alert").hidden = true; setAlertOpen(false); chrome.runtime.sendMessage("recompute");
 };
