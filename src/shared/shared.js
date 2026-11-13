@@ -19,7 +19,7 @@ async function kiteReq(cfg, method, path, reqBody) {
   let body = null;
   try { body = await res.json(); } catch (_) {}
   if (!res.ok || (body && body.success === false)) {
-    if (res.status === 401) throw new Error("Not logged in. Log in to Kite in this browser, or add an API token in Settings.");
+    if (res.status === 401) { const e = new Error("Not logged in. Log in to Kite in this browser, or add an API token in Settings."); e.status = 401; throw e; }
     const msg = (body && body.error && body.error.message) || ("HTTP " + res.status);
     const err = new Error(msg); err.status = res.status; throw err;
   }

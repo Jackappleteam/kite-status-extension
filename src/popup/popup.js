@@ -24,6 +24,16 @@ function renderLinks(cfg) {
   });
 }
 
+/* logged out: swap the error line for a friendly sign-in card */
+function showLogin(cfg) {
+  $("loginBtn").href = `${cfg.apiBase}/v1/auth/login?redirect=${encodeURIComponent("/apps")}`;
+  document.querySelector(".top").hidden = true;
+  ["main", "controls", "alert", "err"].forEach((id) => ($(id).hidden = true));
+  $("login").hidden = false;
+}
+function hideLogin() { $("login").hidden = true; document.querySelector(".top").hidden = false; }
+$("loginToken").onclick = (e) => { e.preventDefault(); chrome.runtime.openOptionsPage(); };
+
 function renderPower(s) {
   const b = $("power"); confirmStop = false;
   b.disabled = false;
@@ -93,7 +103,12 @@ async function load(force) {
     await chrome.storage.local.set({ last: s, lastError: null });
     renderLinks(cfg); render(s);
     
-  } catch (e) { await minDelay; $("err").hidden = false; $("err").textContent = String(e.message || e) + " (API: " + cfg.apiBase + ")"; $("state").textContent = "Couldn't load"; }
+    hideLogin();
+  } catch (e) {
+    await minDelay;
+    if (e.status === 401) return showLogin(cfg);
+    $("err").hidden = false; $("err").textContent = String(e.message || e) + " (API: " + cfg.apiBase + ")"; $("state").textContent = "Couldn't load";
+  }
   finally { document.body.classList.remove("loading"); $("refresh").textContent = "Refresh"; }
 }
 

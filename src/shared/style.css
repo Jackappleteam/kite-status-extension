@@ -114,3 +114,10 @@ select:focus{outline:2px solid hsl(var(--primary)/.6);outline-offset:1px}
 .trow .tv{flex:0 0 auto;min-width:52px;text-align:right;color:hsl(var(--muted-foreground))}
 .alertbtns{display:flex;align-items:center;gap:8px}.alert .arrow{margin:0;color:hsl(var(--notice-fg))}.alert .arrow:hover{background:hsl(var(--destructive)/.2)}
 .item .name{flex:1}.sd{width:8px;height:8px;border-radius:50%;flex:none}.item .check{margin-left:0}
+
+/* logged-out card */
+.login{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:22px 16px}
+.login .lock{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:hsl(var(--secondary));margin-bottom:4px}
+.login .lock svg{width:22px;height:22px}.login b{font-size:16px}
+.btn.linkbtn{display:inline-grid;place-items:center;text-decoration:none;margin-top:12px;width:100%;color:hsl(var(--primary-foreground))}
+.btn.linkbtn:hover{color:hsl(var(--primary-foreground))}
