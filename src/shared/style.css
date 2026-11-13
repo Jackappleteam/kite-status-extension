@@ -153,3 +153,9 @@ select:focus{outline:2px solid hsl(var(--primary)/.6);outline-offset:1px}
 /* start / stop feedback */
 .pending .dot{background:transparent;border:1.5px solid hsl(var(--muted-foreground)/.5);border-top-color:hsl(var(--primary));animation:spin .6s linear infinite}
 .offline .dot{background:hsl(var(--muted-foreground))}
+
+/* copy buttons */
+.copyrow{display:flex;gap:6px;margin-top:8px}
+.chip{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:28px;padding:0 8px;border:1px dashed hsl(var(--border));border-radius:calc(var(--radius) - 4px);background:transparent;color:hsl(var(--muted-foreground));font:inherit;font-size:12px;cursor:pointer}
+.chip:hover{background:hsl(var(--secondary));color:hsl(var(--foreground))}.chip svg{width:13px;height:13px;flex:none}
+.chip.done{color:hsl(var(--green));border-color:hsl(var(--green)/.5)}

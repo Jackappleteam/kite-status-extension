@@ -50,7 +50,19 @@ function showSkeleton() {
 function endBoot() { document.body.classList.remove("boot"); $("skeleton").hidden = true; }
 
 let updatedAt = 0;
-function markUpdated(at) { updatedAt = at; $("updated").textContent = "Updated " + ago(at); }
+function markUpdated(at) { updatedAt = at; $("updated").textContent = at ? "Updated " + ago(at) : ""; }
+setInterval(() => { if (updatedAt) markUpdated(updatedAt); }, 5000); // count up while the popup stays open
+
+/* copy buttons */
+async function copyText(btn, text, label) {
+  try { await navigator.clipboard.writeText(text); } catch (_) { return; }
+  const span = btn.querySelector("span"); span.textContent = "Copied";
+  btn.classList.add("done"); clearTimeout(btn._t);
+  btn._t = setTimeout(() => { span.textContent = label; btn.classList.remove("done"); }, 1400);
+}
+const discordId = (app) => app && (app.discord_application_id || app.discord_app_id || app.discord_client_id || app.application_id || "");
+$("copyApp").onclick = () => cfgCache && cfgCache.appId && copyText($("copyApp"), cfgCache.appId, "Copy app ID");
+$("copyDiscord").onclick = async () => { const { last } = await chrome.storage.local.get("last"); const id = discordId(last && last.app); if (id) copyText($("copyDiscord"), String(id), "Copy Discord ID"); };
 
 function render(s, err) {
   endBoot();
@@ -70,6 +82,7 @@ function render(s, err) {
   $("servers").textContent = s.app.discord_guild_count != null ? s.app.discord_guild_count + " servers" : "";
   $("reason").hidden = !s.app.disabled_reason; $("reason").textContent = s.app.disabled_reason || "";
   markUpdated(s.at);
+  $("copyDiscord").hidden = !discordId(s.app);
   // error alert
   const a = $("alert");
   if (s.unseenCount > 0) {
@@ -88,7 +101,8 @@ function render(s, err) {
 /* expandable error list: last few unseen errors, each with its time, linking to the logs page */
 function ago(ts) {
   const sec = Math.max(0, Math.round((Date.now() - new Date(ts).getTime()) / 1000));
-  if (sec < 60) return "just now";
+  if (sec < 5) return "just now";
+  if (sec < 60) return sec + "s ago";
   if (sec < 3600) return Math.floor(sec / 60) + "m ago";
   if (sec < 86400) return Math.floor(sec / 3600) + "h ago";
   return Math.floor(sec / 86400) + "d ago";
