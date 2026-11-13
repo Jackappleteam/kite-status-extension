@@ -5,3 +5,9 @@
 .status.bad{color:hsl(var(--notice-fg))}
 .status.busy{color:hsl(var(--muted-foreground))}
 .btn.saved{background:hsl(var(--green));color:#fff;border-color:transparent}
+.about{display:flex;justify-content:space-between;align-items:center;margin-top:28px;padding-top:14px;border-top:1px solid hsl(var(--border))}
+.about b{font-weight:600;color:hsl(var(--foreground))}
+.about a{text-decoration:underline;text-underline-offset:2px}
+/* light theme: darker green so the status text stays readable */
+html[data-theme="light"] .status.ok{color:hsl(142 72% 30%)}
+@media (prefers-color-scheme: light){html[data-theme="system"] .status.ok{color:hsl(142 72% 30%)}}

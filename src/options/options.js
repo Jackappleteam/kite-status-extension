@@ -49,3 +49,5 @@ $("save").onclick = async () => {
 
 function syncQuiet() { document.getElementById("quietTimes").classList.toggle("off", !document.getElementById("quietEnabled").checked); }
 document.getElementById("quietEnabled").onchange = syncQuiet;
+
+$("version").textContent = "v" + chrome.runtime.getManifest().version;
