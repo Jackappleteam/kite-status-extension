@@ -1,0 +1,47 @@
+<!doctype html><html data-theme="system"><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head>
+<body>
+  <div id="viewMain">
+  <div class="top">
+    <div class="switcher">
+      <button class="trigger" id="trigger">
+        <div class="avatar" id="avatar">K</div>
+        <div class="meta"><div class="name" id="name">Kite</div>
+          <span class="pill" id="pill"><span class="dot"></span><span id="state">Loading…</span></span></div>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+      </button>
+      <div class="menu" id="menu" hidden></div>
+    </div>
+    <div class="quiet" id="quiet" hidden data-tip="">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </div>
+  </div>
+  <div id="alert" class="alert" hidden>
+    <div class="row"><b id="alertTitle"></b><span class="alertbtns"><a id="alertLink" href="#" target="_blank">View logs</a><button class="arrow" id="alertClose" title="Dismiss until there is a new error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></div>
+    <div id="alertMsg" class="msg"></div>
+  </div>
+  <div id="main" class="card" hidden>
+    <div class="row"><span class="muted small">Credits this month</span><span class="muted small"><span id="pct"></span> <button class="arrow" id="openUsage" title="Usage details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"/></svg></button></span></div>
+    <div class="row"><span class="big" id="used"></span><span class="muted" id="limit"></span></div>
+    <div class="bar"><div id="fill" class="fill"></div></div>
+    <div class="row small muted"><span id="remaining"></span><span id="servers"></span></div>
+    <div id="reason" class="notice" hidden></div>
+  </div>
+  <div id="controls" hidden>
+    <div class="actions"><button class="btn sm" id="power"></button></div>
+    <div class="links" id="links"></div>
+  </div>
+  <div id="err" class="notice" hidden></div>
+  <div class="foot"><span id="updated"></span><span><a href="#" id="refresh">Refresh</a> · <a href="#" id="settings">Settings</a></span></div>
+</div>
+  <div id="viewUsage" hidden>
+    <div class="uhead"><button class="icon-btn back" id="back" title="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div><div class="name" id="uname"></div><div class="sub small">Usage this month</div></div></div>
+    <div class="card"><div class="row"><span class="big" id="uused"></span><span class="muted" id="ulimit"></span></div>
+      <div class="bar"><div id="ufill" class="fill"></div></div>
+      <div class="grid3"><div><div class="muted small">Daily avg</div><b id="uavg"></b></div><div><div class="muted small">On pace for</div><b id="uproj"></b></div><div><div class="muted small">Resets</div><b id="ureset"></b></div></div></div>
+    <div class="card" style="margin-top:10px"><div class="muted small">Credits per day</div><div id="chart"></div></div>
+    <div class="card" style="margin-top:10px"><div class="muted small" style="margin-bottom:8px">By type</div><div id="types"></div></div>
+    <div id="uerr" class="notice" hidden></div>
+  </div>
+  <script src="shared.js"></script><script src="popup.js"></script>
+</body></html>
