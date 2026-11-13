@@ -159,3 +159,17 @@ select:focus{outline:2px solid hsl(var(--primary)/.6);outline-offset:1px}
 .chip{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:28px;padding:0 8px;border:1px dashed hsl(var(--border));border-radius:calc(var(--radius) - 4px);background:transparent;color:hsl(var(--muted-foreground));font:inherit;font-size:12px;cursor:pointer}
 .chip:hover{background:hsl(var(--secondary));color:hsl(var(--foreground))}.chip svg{width:13px;height:13px;flex:none}
 .chip.done{color:hsl(var(--green));border-color:hsl(var(--green)/.5)}
+
+/* keyboard focus */
+:focus-visible{outline:2px solid hsl(var(--primary));outline-offset:2px}
+.trigger:focus-visible,.item:focus-visible,.chip:focus-visible,.links a:focus-visible{outline-offset:-2px}
+.item:focus-visible{background:hsl(var(--secondary))}
+.quiet:focus-visible::after{opacity:1}
+.item[aria-selected="true"] .name{font-weight:600}
+
+/* contrast: solid button color (white text >= 4.5:1) */
+:root{--solid:21 90% 40%}
+.btn.primary,.btn.start{background:hsl(var(--solid))}
+/* contrast: light theme overrides (checked with WCAG ratios: icons/dots >= 3:1, text >= 4.5:1) */
+html[data-theme="light"]{--yellow:40 95% 36%;--green:142 72% 30%;--muted-foreground:25 5.3% 40%}
+@media (prefers-color-scheme: light){html[data-theme="system"]{--yellow:40 95% 36%;--green:142 72% 30%;--muted-foreground:25 5.3% 40%}}

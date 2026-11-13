@@ -11,6 +11,7 @@ chrome.storage.onChanged.addListener((ch) => { if (ch.theme) document.documentEl
 async function renderQuiet() {
   const q = await getQuiet(), el = $("quiet");
   el.hidden = !q.enabled;
+  el.setAttribute("aria-label", `Quiet hours ${fmtTime(q.start)} to ${fmtTime(q.end)}${q.active ? ", active now" : ""}`);
   el.dataset.tip = `Quiet hours: ${fmtTime(q.start)} – ${fmtTime(q.end)}${q.active ? " (active now)" : ""}. No notifications during this time.`;
 }
 renderQuiet();
@@ -132,11 +133,13 @@ async function renderMenu(currentId) {
   const dots = {}; (botStates || []).forEach((b) => { dots[b.id] = b; });
   const m = $("menu"); m.innerHTML = "";
   apps.forEach((a) => {
-    const d = document.createElement("div"); d.className = "item";
+    const d = document.createElement("div"); d.className = "item"; d.setAttribute("role", "option"); d.tabIndex = -1;
+    d.setAttribute("aria-selected", String(a.id === currentId));
     const b = dots[a.id], col = !b ? "muted-foreground" : b.kind === "error" || b.kind === "paused" || b.pct >= 100 || b.unseen > 0 ? "destructive" : b.kind === "offline" ? "muted-foreground" : b.pct >= 80 ? "yellow" : "green";
     d.innerHTML = `<div class="avatar">${initial(a.name)}</div><span class="name"></span><span class="sd" style="background:hsl(var(--${col}))" title="${b ? b.kind : ""}"></span>${a.id === currentId ? '<span class="check">✓</span>' : ""}`;
     d.querySelector(".name").textContent = a.name;
-    d.onclick = async () => { m.hidden = true; await chrome.storage.local.set({ appId: a.id, last: null }); showSkeleton(); load(true); };
+    d.setAttribute("aria-label", a.name + (b ? ", " + (LABELS[b.kind] || b.kind).toLowerCase() : ""));
+    d.onclick = async () => { setMenu(false); await chrome.storage.local.set({ appId: a.id, last: null }); showSkeleton(); load(true); };
     m.appendChild(d);
   });
 }
@@ -190,8 +193,31 @@ $("power").onclick = async () => {
   } catch (e) { $("err").hidden = false; $("err").textContent = "Couldn't change the bot: " + e.message; render(s); }
 };
 
-$("trigger").onclick = (e) => { e.stopPropagation(); $("menu").hidden = !$("menu").hidden; };
-document.addEventListener("click", () => ($("menu").hidden = true));
+/* bot dropdown: mouse, plus Escape / arrow keys / Home / End / Enter */
+const menuItems = () => [...$("menu").querySelectorAll(".item")];
+function setMenu(open, focusSel) {
+  $("menu").hidden = !open; $("trigger").setAttribute("aria-expanded", String(open));
+  if (open) { const it = menuItems(); (focusSel === "last" ? it[it.length - 1] : it.find((i) => i.getAttribute("aria-selected") === "true") || it[0])?.focus(); }
+}
+$("trigger").onclick = (e) => { e.stopPropagation(); setMenu($("menu").hidden); };
+$("trigger").onkeydown = (e) => {
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); setMenu(true, e.key === "ArrowUp" ? "last" : ""); }
+};
+$("menu").onkeydown = (e) => {
+  const it = menuItems(), i = it.indexOf(document.activeElement);
+  if (e.key === "ArrowDown") { e.preventDefault(); it[(i + 1) % it.length].focus(); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); it[(i - 1 + it.length) % it.length].focus(); }
+  else if (e.key === "Home") { e.preventDefault(); it[0].focus(); }
+  else if (e.key === "End") { e.preventDefault(); it[it.length - 1].focus(); }
+  else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); document.activeElement.click(); }
+  else if (e.key === "Tab") setMenu(false);
+};
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (!$("menu").hidden) { e.preventDefault(); setMenu(false); $("trigger").focus(); }
+  else if ($("viewUsage").classList.contains("active")) { e.preventDefault(); showView("main"); $("openUsage").focus(); }
+});
+document.addEventListener("click", () => setMenu(false));
 $("refresh").onclick = (e) => { e.preventDefault(); load(true); };
 $("settings").onclick = (e) => { e.preventDefault(); chrome.runtime.openOptionsPage(); };
 load();
@@ -217,8 +243,8 @@ function showView(v) {
 const ro = new ResizeObserver(fit); ro.observe($("viewMain")); ro.observe($("viewUsage"));
 $("viewUsage").inert = true; fit();
 requestAnimationFrame(() => requestAnimationFrame(() => $("views").classList.add("ready")));
-$("openUsage").onclick = () => openUsage();
-$("back").onclick = () => showView("main");
+$("openUsage").onclick = () => { openUsage(); setTimeout(() => $("back").focus({ preventScroll: true }), 30); };
+$("back").onclick = () => { showView("main"); setTimeout(() => $("openUsage").focus({ preventScroll: true }), 30); };
 
 function chartSvg(byDay, daysInMonth, today, avg) {
   const W = 300, H = 110, pad = 16, bw = W / daysInMonth, byIdx = {};
