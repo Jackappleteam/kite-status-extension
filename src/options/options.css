@@ -1,0 +1,6 @@
+/* Settings page only */
+.btnrow{display:flex;gap:8px}
+.status{margin-top:12px;min-height:18px}
+.status.ok{color:hsl(var(--green))}
+.status.bad{color:hsl(var(--notice-fg))}
+.status.busy{color:hsl(var(--muted-foreground))}
