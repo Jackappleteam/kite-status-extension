@@ -1,5 +1,5 @@
 const $ = (id) => document.getElementById(id);
-const LABELS = { online: "Online", paused: "Out of credits", offline: "Offline", error: "Bot token invalid" };
+const LABELS = { online: "Online", paused: "Out of credits", offline: "Stopped", error: "Bot token invalid" };
 let apps = [], current = null, cfgCache = null, confirmStop = false;
 const initial = (n) => (n || "?").trim().charAt(0).toUpperCase();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -11,6 +11,7 @@ chrome.storage.onChanged.addListener((ch) => { if (ch.theme) document.documentEl
 async function renderQuiet() {
   const q = await getQuiet(), el = $("quiet");
   el.hidden = !q.enabled;
+  el.setAttribute("aria-label", `Quiet hours ${fmtTime(q.start)} to ${fmtTime(q.end)}${q.active ? ", active now" : ""}`);
   el.dataset.tip = `Quiet hours: ${fmtTime(q.start)} – ${fmtTime(q.end)}${q.active ? " (active now)" : ""}. No notifications during this time.`;
 }
 renderQuiet();
@@ -24,6 +25,16 @@ function renderLinks(cfg) {
   });
 }
 
+/* logged out: swap the error line for a friendly sign-in card */
+function showLogin(cfg) {
+  $("loginBtn").href = `${cfg.apiBase}/v1/auth/login?redirect=${encodeURIComponent("/apps")}`;
+  document.querySelector(".top").hidden = true;
+  ["main", "controls", "alert", "err"].forEach((id) => ($(id).hidden = true));
+  $("login").hidden = false;
+}
+function hideLogin() { $("login").hidden = true; document.querySelector(".top").hidden = false; }
+$("loginToken").onclick = (e) => { e.preventDefault(); chrome.runtime.openOptionsPage(); };
+
 function renderPower(s) {
   const b = $("power"); confirmStop = false;
   b.disabled = false;
@@ -31,7 +42,31 @@ function renderPower(s) {
   b.textContent = s.app.enabled ? "Stop bot" : "Start bot";
 }
 
+/* loading skeleton: shown until the first real render so the layout doesn't jump */
+function showSkeleton() {
+  document.body.classList.add("boot");
+  $("skeleton").hidden = false;
+  ["main", "controls", "alert", "err"].forEach((id) => ($(id).hidden = true));
+}
+function endBoot() { document.body.classList.remove("boot"); $("skeleton").hidden = true; }
+
+let updatedAt = 0;
+function markUpdated(at) { updatedAt = at; $("updated").textContent = at ? "Updated " + ago(at) : ""; }
+setInterval(() => { if (updatedAt) markUpdated(updatedAt); }, 5000); // count up while the popup stays open
+
+/* copy buttons */
+async function copyText(btn, text, label) {
+  try { await navigator.clipboard.writeText(text); } catch (_) { return; }
+  const span = btn.querySelector("span"); span.textContent = "Copied";
+  btn.classList.add("done"); clearTimeout(btn._t);
+  btn._t = setTimeout(() => { span.textContent = label; btn.classList.remove("done"); }, 1400);
+}
+const discordId = (app) => app && (app.discord_application_id || app.discord_app_id || app.discord_client_id || app.application_id || "");
+$("copyApp").onclick = () => cfgCache && cfgCache.appId && copyText($("copyApp"), cfgCache.appId, "Copy app ID");
+$("copyDiscord").onclick = async () => { const { last } = await chrome.storage.local.get("last"); const id = discordId(last && last.app); if (id) copyText($("copyDiscord"), String(id), "Copy Discord ID"); };
+
 function render(s, err) {
+  endBoot();
   $("err").hidden = !err; if (err) $("err").textContent = err;
   if (!s) return;
   const kind = statusKind(s);
@@ -47,37 +82,71 @@ function render(s, err) {
   $("remaining").textContent = s.limit ? Math.max(0, s.limit - s.used).toLocaleString() + " left" : "";
   $("servers").textContent = s.app.discord_guild_count != null ? s.app.discord_guild_count + " servers" : "";
   $("reason").hidden = !s.app.disabled_reason; $("reason").textContent = s.app.disabled_reason || "";
-  const mins = Math.round((Date.now() - s.at) / 60000);
-  $("updated").textContent = mins < 1 ? "Updated just now" : `Updated ${mins}m ago`;
+  markUpdated(s.at);
+  $("copyDiscord").hidden = !discordId(s.app);
   // error alert
   const a = $("alert");
   if (s.unseenCount > 0) {
     a.hidden = false;
     const n = s.unseenCount;
     $("alertTitle").textContent = n === s.errors ? `${n} error${n === 1 ? "" : "s"} in the last 24h` : `${n} new error${n === 1 ? "" : "s"}`;
-    $("alertMsg").textContent = s.recentErrors && s.recentErrors[0] ? s.recentErrors[0].message : "Open the logs to see what failed.";
-    if (cfgCache) $("alertLink").href = `${cfgCache.dashBase}/apps/${cfgCache.appId}/logs`;
+    const errs = s.recentErrors || [];
+    $("alertMsg").textContent = errs[0] ? errs[0].message : "Open the logs to see what failed.";
+    const logs = cfgCache ? `${cfgCache.dashBase}/apps/${cfgCache.appId}/logs` : "#";
+    $("alertLink").href = logs;
+    renderErrorList(errs, logs);
   } else a.hidden = true;
   renderPower(s);
 }
+
+/* expandable error list: last few unseen errors, each with its time, linking to the logs page */
+function ago(ts) {
+  const sec = Math.max(0, Math.round((Date.now() - new Date(ts).getTime()) / 1000));
+  if (sec < 5) return "just now";
+  if (sec < 60) return sec + "s ago";
+  if (sec < 3600) return Math.floor(sec / 60) + "m ago";
+  if (sec < 86400) return Math.floor(sec / 3600) + "h ago";
+  return Math.floor(sec / 86400) + "d ago";
+}
+function renderErrorList(errs, logsUrl) {
+  const list = $("alertList"); list.innerHTML = "";
+  errs.forEach((e) => {
+    const a = document.createElement("a"); a.className = "eitem"; a.href = logsUrl; a.target = "_blank";
+    a.innerHTML = '<span class="emsg"></span><span class="etime"></span>';
+    a.querySelector(".emsg").textContent = e.message || "Error";
+    a.querySelector(".etime").textContent = ago(e.at);
+    a.title = new Date(e.at).toLocaleString();
+    list.appendChild(a);
+  });
+  $("alertToggle").disabled = !errs.length; // nothing to expand
+  if (!errs.length) setAlertOpen(false);
+}
+function setAlertOpen(open) {
+  $("alertList").hidden = !open; $("alertMsg").hidden = open;
+  $("alertToggle").setAttribute("aria-expanded", String(open));
+  $("alert").classList.toggle("open", open);
+}
+$("alertToggle").onclick = () => setAlertOpen($("alertList").hidden);
 
 async function renderMenu(currentId) {
   const { botStates } = await chrome.storage.local.get("botStates");
   const dots = {}; (botStates || []).forEach((b) => { dots[b.id] = b; });
   const m = $("menu"); m.innerHTML = "";
   apps.forEach((a) => {
-    const d = document.createElement("div"); d.className = "item";
+    const d = document.createElement("div"); d.className = "item"; d.setAttribute("role", "option"); d.tabIndex = -1;
+    d.setAttribute("aria-selected", String(a.id === currentId));
     const b = dots[a.id], col = !b ? "muted-foreground" : b.kind === "error" || b.kind === "paused" || b.pct >= 100 || b.unseen > 0 ? "destructive" : b.kind === "offline" ? "muted-foreground" : b.pct >= 80 ? "yellow" : "green";
     d.innerHTML = `<div class="avatar">${initial(a.name)}</div><span class="name"></span><span class="sd" style="background:hsl(var(--${col}))" title="${b ? b.kind : ""}"></span>${a.id === currentId ? '<span class="check">✓</span>' : ""}`;
     d.querySelector(".name").textContent = a.name;
-    d.onclick = async () => { m.hidden = true; await chrome.storage.local.set({ appId: a.id, last: null }); load(true); };
+    d.setAttribute("aria-label", a.name + (b ? ", " + (LABELS[b.kind] || b.kind).toLowerCase() : ""));
+    d.onclick = async () => { setMenu(false); await chrome.storage.local.set({ appId: a.id, last: null }); showSkeleton(); load(true); };
     m.appendChild(d);
   });
 }
 
-async function load(force) {
+async function load(force, quiet) {
   const cfg = await getConfig(); cfgCache = cfg;
-  document.body.classList.add("loading"); $("refresh").innerHTML = '<span class="spin"></span>Refreshing';
+  if (!quiet) { document.body.classList.add("loading"); $("refresh").innerHTML = '<span class="spin"></span>Refreshing'; }
   const minDelay = force ? sleep(450) : Promise.resolve(); // brief, visible load on manual refresh
   const st = await chrome.storage.local.get(["last", "lastError", "apps"]);
   if (st.apps) { apps = st.apps; renderMenu(cfg.appId); }
@@ -88,29 +157,67 @@ async function load(force) {
     let id = cfg.appId;
     if (!apps.some((a) => a.id === id)) { id = apps[0] && apps[0].id; await chrome.storage.local.set({ appId: id }); cfg.appId = id; }
     renderMenu(id);
-    if (!id) { $("state").textContent = "No apps"; return; }
+    if (!id) { endBoot(); $("state").textContent = "No apps"; return; }
     const s = await fetchStatus(cfg); await minDelay;
     await chrome.storage.local.set({ last: s, lastError: null });
     renderLinks(cfg); render(s);
     
-  } catch (e) { await minDelay; $("err").hidden = false; $("err").textContent = String(e.message || e) + " (API: " + cfg.apiBase + ")"; $("state").textContent = "Couldn't load"; }
+    hideLogin();
+  } catch (e) {
+    await minDelay;
+    endBoot();
+    if (e.status === 401) return showLogin(cfg);
+    $("err").hidden = false; $("err").textContent = String(e.message || e) + " (API: " + cfg.apiBase + ")"; $("state").textContent = "Couldn't load";
+  }
   finally { document.body.classList.remove("loading"); $("refresh").textContent = "Refresh"; }
 }
 
 /* start / stop (needs your Kite login; API tokens can't change apps) */
+function setPending(text) { $("pill").className = "pill pending"; $("state").textContent = text; }
 $("power").onclick = async () => {
   const st = await chrome.storage.local.get("last"); const s = st.last; if (!s) return;
   const b = $("power");
   if (s.app.enabled && !confirmStop) { confirmStop = true; b.textContent = "Click again to stop"; setTimeout(() => { if (confirmStop) renderPower(s); }, 3000); return; }
-  confirmStop = false; b.disabled = true; b.innerHTML = '<span class="spin"></span>' + (s.app.enabled ? "Stopping…" : "Starting…");
+  confirmStop = false; b.disabled = true;
+  const stopping = s.app.enabled;
+  b.innerHTML = '<span class="spin"></span>' + (stopping ? "Stopping…" : "Starting…");
+  setPending(stopping ? "Stopping…" : "Starting…");
   try {
-    await kiteReq(cfgCache, "PUT", "/apps/" + cfgCache.appId, { name: s.app.name, description: s.app.description || null, enabled: !s.app.enabled });
-    await load(true);
-  } catch (e) { $("err").hidden = false; $("err").textContent = "Couldn't change the bot: " + e.message; renderPower(s); }
+    const res = await kiteReq(cfgCache, "PUT", "/apps/" + cfgCache.appId, { name: s.app.name, description: s.app.description || null, enabled: !stopping });
+    // Show the new state right away from the response instead of waiting for the next poll.
+    const next = { ...s, app: { ...s.app, ...(res && typeof res === "object" ? res : {}), enabled: !stopping }, at: Date.now() };
+    await chrome.storage.local.set({ last: next });
+    render(next); markUpdated(next.at);
+    chrome.runtime.sendMessage("refresh");
+    setTimeout(() => load(false, true), 1500); // quiet re-check that the change stuck
+  } catch (e) { $("err").hidden = false; $("err").textContent = "Couldn't change the bot: " + e.message; render(s); }
 };
 
-$("trigger").onclick = (e) => { e.stopPropagation(); $("menu").hidden = !$("menu").hidden; };
-document.addEventListener("click", () => ($("menu").hidden = true));
+/* bot dropdown: mouse, plus Escape / arrow keys / Home / End / Enter */
+const menuItems = () => [...$("menu").querySelectorAll(".item")];
+function setMenu(open, focusSel) {
+  $("menu").hidden = !open; $("trigger").setAttribute("aria-expanded", String(open));
+  if (open) { const it = menuItems(); (focusSel === "last" ? it[it.length - 1] : it.find((i) => i.getAttribute("aria-selected") === "true") || it[0])?.focus(); }
+}
+$("trigger").onclick = (e) => { e.stopPropagation(); setMenu($("menu").hidden); };
+$("trigger").onkeydown = (e) => {
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); setMenu(true, e.key === "ArrowUp" ? "last" : ""); }
+};
+$("menu").onkeydown = (e) => {
+  const it = menuItems(), i = it.indexOf(document.activeElement);
+  if (e.key === "ArrowDown") { e.preventDefault(); it[(i + 1) % it.length].focus(); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); it[(i - 1 + it.length) % it.length].focus(); }
+  else if (e.key === "Home") { e.preventDefault(); it[0].focus(); }
+  else if (e.key === "End") { e.preventDefault(); it[it.length - 1].focus(); }
+  else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); document.activeElement.click(); }
+  else if (e.key === "Tab") setMenu(false);
+};
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (!$("menu").hidden) { e.preventDefault(); setMenu(false); $("trigger").focus(); }
+  else if ($("viewUsage").classList.contains("active")) { e.preventDefault(); showView("main"); $("openUsage").focus(); }
+});
+document.addEventListener("click", () => setMenu(false));
 $("refresh").onclick = (e) => { e.preventDefault(); load(true); };
 $("settings").onclick = (e) => { e.preventDefault(); chrome.runtime.openOptionsPage(); };
 load();
@@ -125,9 +232,19 @@ const TYPES = [
   { key: "event_listener_flow_execution", label: "Events", color: "var(--chart-4)" },
 ];
 
-function showView(v) { $("viewMain").hidden = v !== "main"; $("viewUsage").hidden = v !== "usage"; }
-$("openUsage").onclick = () => openUsage();
-$("back").onclick = () => showView("main");
+/* page switching: both views stay mounted; the wrapper animates to the active view's height */
+function fit() { const v = document.querySelector(".view.active"); if (v) $("views").style.height = v.offsetHeight + "px"; }
+function showView(v) {
+  $("viewMain").classList.toggle("active", v === "main");
+  $("viewUsage").classList.toggle("active", v === "usage");
+  $("viewMain").inert = v !== "main"; $("viewUsage").inert = v !== "usage";
+  fit();
+}
+const ro = new ResizeObserver(fit); ro.observe($("viewMain")); ro.observe($("viewUsage"));
+$("viewUsage").inert = true; fit();
+requestAnimationFrame(() => requestAnimationFrame(() => $("views").classList.add("ready")));
+$("openUsage").onclick = () => { openUsage(); setTimeout(() => $("back").focus({ preventScroll: true }), 30); };
+$("back").onclick = () => { showView("main"); setTimeout(() => $("openUsage").focus({ preventScroll: true }), 30); };
 
 function chartSvg(byDay, daysInMonth, today, avg) {
   const W = 300, H = 110, pad = 16, bw = W / daysInMonth, byIdx = {};
@@ -185,5 +302,5 @@ $("alertClose").onclick = async () => {
   const { last } = await chrome.storage.local.get("last"); if (!last) return;
   await chrome.storage.local.set({ ["errAck:" + cfgCache.appId]: last.latestErrorId || 0 });
   last.unseenCount = 0; last.recentErrors = []; await chrome.storage.local.set({ last });
-  $("alert").hidden = true; chrome.runtime.sendMessage("recompute");
+  $("alert").hidden = true; setAlertOpen(false); chrome.runtime.sendMessage("recompute");
 };

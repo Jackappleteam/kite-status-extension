@@ -5,13 +5,16 @@ A Chrome extension that shows your [Kite](https://github.com/merlinfuchs/kite) D
 ## Features
 
 - **Toolbar badge:** the selected bot's credit percentage. Green under 80%, yellow from 80%, red when out of credits, when Discord rejects the bot token, or when there is a new error. Gray when the app is off.
-- **Popup:** online status, credits used out of your limit, credits left, and server count.
+- **Popup:** online status, credits used out of your limit, credits left, and server count. Opens with a loading placeholder and slides between pages. "Updated" counts up while the popup is open.
+- **Logged-out screen:** if you are not logged in to Kite, the popup shows a "Log in to Kite" button instead of an error.
 - **Bot switcher:** switch between up to 10 bots from a dropdown at the top. Each bot has a status dot.
-- **Error alerts:** a banner with the latest error and a link to the logs. Dismiss it with the X; it comes back when a newer error appears.
+- **Error alerts:** a banner with the latest error. Click it to expand the last 5 errors with their times, each linking to the logs. Dismiss it with the X; it comes back when a newer error appears.
 - **Notifications:** new errors for any of your bots, credit warnings at 80% and 100%, and when a bot goes offline. Clicking an error notification opens that bot's logs.
 - **Quiet hours:** pause notifications between two times. A yellow moon shows in the popup while it is enabled.
 - **Usage page:** credits per day, daily average, on-pace forecast, reset date, and usage by type (Commands, Messages, Events).
-- **Start / stop:** turn the selected bot on or off (needs your Kite login).
+- **Start / stop:** turn the selected bot on or off (needs your Kite login). The popup shows "Stopping…" or "Starting…", then the new state right away.
+- **Copy buttons:** copy the app ID, or the Discord application ID when Kite provides it.
+- **Keyboard:** Escape closes the bot dropdown (or the usage page), arrow keys, Home and End move through the bots, and Enter selects.
 - **Quick links:** Dashboard, Commands, Events and Logs for the selected bot.
 - **Themes:** system, light or dark, set in Settings.
 - **Settings:** test your connection, see the extension version, and jump to the GitHub repo and changelog.

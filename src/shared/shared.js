@@ -19,7 +19,7 @@ async function kiteReq(cfg, method, path, reqBody) {
   let body = null;
   try { body = await res.json(); } catch (_) {}
   if (!res.ok || (body && body.success === false)) {
-    if (res.status === 401) throw new Error("Not logged in. Log in to Kite in this browser, or add an API token in Settings.");
+    if (res.status === 401) { const e = new Error("Not logged in. Log in to Kite in this browser, or add an API token in Settings."); e.status = 401; throw e; }
     const msg = (body && body.error && body.error.message) || ("HTTP " + res.status);
     const err = new Error(msg); err.status = res.status; throw err;
   }
@@ -42,7 +42,7 @@ async function fetchStatus(cfg) {
   const ack = (await chrome.storage.local.get(ackKey))[ackKey] || 0;
   const unseen = allErr.filter((l) => l.id > ack);
   const latestErrorId = allErr.length ? allErr[0].id : 0;
-  const recentErrors = unseen.slice(0, 3), unseenCount = unseen.length;
+  const recentErrors = unseen.slice(0, 5), unseenCount = unseen.length;
   const errorIds = unseen.map((l) => l.id);
   let app = appR.data;
   if (!app) { // fall back to the app list entry
